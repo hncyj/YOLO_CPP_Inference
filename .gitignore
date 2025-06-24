@@ -1,11 +1,11 @@
-<<<<<<< HEAD
 */detect
 */pose
 */seg
 /results
 /resources
 /.vscode
-=======
+/build
+
 # Prerequisites
 *.d
 
@@ -38,4 +38,3 @@
 *.exe
 *.out
 *.app
->>>>>>> 474735d34a0bf313a1cf73ba3b09318657a230a4
