@@ -31,9 +31,10 @@ void YOLOPipeline::initializeEngine() {
     
     if (!this->loadModel()) { throw std::runtime_error("Failed to load model: " + model_path_); }
     
-    // TODO: 确认这里读取的输入维度是否正确
     auto input_shape = this->inference_engine_->getInputShape();
     this->target_size_ = cv::Size(input_shape[1], input_shape[2]); // H, W
+
+    this->yolo_preprocessor_ = YOLOPreProcessor(this->target_size_);
 
     // 获取输出的数量, 根据任务类型对相应参数进行赋值
     auto output_shapes = this->inference_engine_->getOutputShapes();
