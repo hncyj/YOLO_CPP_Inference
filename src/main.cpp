@@ -20,7 +20,7 @@ int main() {
         cv::Rect roi = cv::Rect(540, 765, 200, 200);
 
         const int class_nums = 1;
-        const std::vector<std::string> class_names = { "seam_seg" };
+        const std::vector<std::string> class_names = { "seg" };
 
         const auto TASK = YOLOTaskType::SEGMENT;
      
