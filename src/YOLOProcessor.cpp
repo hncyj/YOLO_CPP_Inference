@@ -22,35 +22,35 @@ PreProcessResult YOLOPreProcessor::preprocess(const cv::Mat& img) {
     int dw, dh;
     
     if (scale_fill_) {
-        // 拉伸填充模式：直接缩放到目标尺寸
+        // Scale fill mode: directly resize to target size
         ratio_w = static_cast<double>(target_size_.width) / img.cols;
         ratio_h = static_cast<double>(target_size_.height) / img.rows;
         new_unpad_w = target_size_.width;
         new_unpad_h = target_size_.height;
         dw = dh = 0;
     } else {
-        // letterbox 填充模式：保持宽高比
+        // Letterbox fill mode: maintain aspect ratio
         double r = std::min(static_cast<double>(target_size_.width) / img.cols, static_cast<double>(target_size_.height) / img.rows);
         
         if (!scale_up_) { r = std::min(r, 1.0); }
         
         ratio_w = ratio_h = r;
         
-        // 计算缩放后、填充前的尺寸
+        // Calculate size after scaling but before padding
         new_unpad_w = static_cast<int>(round(img.cols * r));
         new_unpad_h = static_cast<int>(round(img.rows * r));
         
-        // 计算填充数值
+        // Calculate padding values
         dw = target_size_.width - new_unpad_w;
         dh = target_size_.height - new_unpad_h;
-        
+
         if (auto_size_) {
             dw = dw % stride_;
             dh = dh % stride_;
         }
     }
     
-    // 计算四个方向的填充数值
+    // Calculate padding values for all four sides
     int pad_left = center_ ? dw / 2 : 0;
     int pad_top = center_ ? dh / 2 : 0;
     int pad_right = dw - pad_left;
@@ -67,7 +67,7 @@ PreProcessResult YOLOPreProcessor::preprocess(const cv::Mat& img) {
         copyMakeBorder(
             resized_img, result.processed_img, 
             pad_top, pad_bottom, pad_left, pad_right, 
-            cv::BORDER_CONSTANT, cv::Scalar::all(114) // 与 YOLO 训练填充颜色保持一致
+            cv::BORDER_CONSTANT, cv::Scalar::all(114) // Keep consistent with YOLO training padding color
         );
     } else {
         result.processed_img = resized_img;
@@ -113,12 +113,12 @@ cv::Point2f DetectPostProcessor::transformCoordinate(const cv::Point2f& point, c
     float orig_x = (point.x - pad_x) / ratio_w;
     float orig_y = (point.y - pad_y) / ratio_h;
         
-    // 限制在图像边界内
+    // Constrain within image boundaries
     orig_x = std::max(0.0f, std::min(orig_x, static_cast<float>(original_size.width - 1)));
     orig_y = std::max(0.0f, std::min(orig_y, static_cast<float>(original_size.height - 1)));
-        
+    
     return cv::Point2f(orig_x, orig_y);
-};
+}
 
 cv::Rect DetectPostProcessor::bbox2Rect(float cx, float cy, float w, float h, const cv::Vec4d& transform_params, const cv::Size& original_size) const {
     double ratio_w = transform_params[0];
@@ -126,7 +126,7 @@ cv::Rect DetectPostProcessor::bbox2Rect(float cx, float cy, float w, float h, co
     double pad_x = transform_params[2];
     double pad_y = transform_params[3];
     
-    // 直接计算原图尺度下的宽高
+    // Directly calculate width and height in original scale
     float w_orig = w / ratio_w;
     float h_orig = h / ratio_h;
     
@@ -167,7 +167,7 @@ std::vector<DetectObj> DetectPostProcessor::decode_output(const cv::Mat& output,
     int data_width = 4 + cls_nums;
     float* pdata = (float*)output.data;
     
-    // 获取候选框
+    // Get candidate boxes
     for (int r = 0; r < bbox_nums; ++r) {
         float max_cls_conf = 0.0f;
         int max_cls_conf_id = -1;
@@ -200,7 +200,7 @@ std::vector<DetectObj> DetectPostProcessor::decode_output(const cv::Mat& output,
             result.emplace_back(std::move(obj));
         }
     } else {
-        // 返回置信度最高的检测框
+        // Return the detection box with highest confidence
         if (!ids.empty()) {
             auto max_iter = std::max_element(scores.begin(), scores.end());
             size_t max_idx = std::distance(scores.begin(), max_iter);
@@ -296,7 +296,7 @@ std::vector<PoseObj> PosePostProcessor::decode_output(const cv::Mat& output, con
             result.emplace_back(std::move(obj));
         }
     } else {
-        // 返回置信度最高的检测框
+        // Return the detection box with highest confidence
         if (!ids.empty()) {
             auto max_iter = std::max_element(scores.begin(), scores.end());
             size_t max_idx = std::distance(scores.begin(), max_iter);
@@ -354,7 +354,7 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
         
         if (max_cls_conf >= this->config_.conf_thresh) { 
             std::vector<float> mask_coeff(pdata + 4 + cls_nums, pdata + data_width);
-            // // 将边界框尺寸以及左上角点位变换到原图下表示
+            // Transform bounding box dimensions and top-left coordinates to original image representation
             cv::Rect box = bbox2Rect(pdata[0], pdata[1], pdata[2], pdata[3], transform_params, original_size);
             
             if (box.width <= 0 || box.height <= 0) {
@@ -395,7 +395,6 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
         seg_obj.conf = scores[idx];
         seg_obj.bbox = expand_box;
         
-        // 生成分割掩码
         cv::Mat mask;
         try {
             generateMask(coefficients[idx], output1, transform_params, original_size, target_size, expand_box, mask);
@@ -408,8 +407,8 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
         result.push_back(std::move(seg_obj));
     }
 
-    // 合并同类激光线
-    // 如果不需要则之间返回 results 即可
+    // Merge masks of same class
+    // If not needed, directly return results
     if (result.size() <= 0) { return result; }
 
     std::vector<SegmentObj> res(class_nums_);
@@ -419,11 +418,11 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
     }
 
     for (const auto& obj : result) {
-        // 合并置信度
+        // Merge confidence
         auto& merged_obj = res[obj.class_idx];
         merged_obj.conf = std::max(obj.conf, merged_obj.conf);
 
-        // 合并边界框
+        // Merge bounding boxes
         if (merged_obj.bbox.area() == 0) {
             merged_obj.bbox = obj.bbox;
             merged_obj.mask = obj.mask.clone();
@@ -435,8 +434,8 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
 
             cv::Rect new_bbox(x1, y1, x2 - x1, y2 - y1);
         
-            // 创建新的合并掩码模版
-            // 由于mask是相对于各自边界框的, 所以不能直接按位与
+            // Create new merged mask template
+            // Since masks are relative to their own bounding boxes, cannot directly bitwise OR
             cv::Mat new_mask = cv::Mat::zeros(new_bbox.size(), CV_8UC1);
 
             cv::Rect old_roi(
@@ -462,7 +461,7 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
                 cv::bitwise_or(temp_mask, obj.mask, temp_mask);
             }
 
-            // 更新合并结果
+            // Update merged result
             merged_obj.bbox = new_bbox;
             merged_obj.mask = new_mask;
         }
@@ -470,7 +469,7 @@ std::vector<SegmentObj> SegmentPostProcessor::decode_output(const cv::Mat& outpu
     
     result.clear();
 
-    // 只返回有检测结果的类别
+    // Only return classes with detection results
     for (const auto& obj : res) {
         if (obj.conf > 0.0f && obj.bbox.area() > 0) {
             result.push_back(obj);
@@ -491,7 +490,7 @@ cv::Rect SegmentPostProcessor::expandRect(const cv::Rect& original_box, const cv
     
     cv::Rect expanded_box = original_box;
     
-    // 拓展较短边
+    // Expand the shorter side
     if (w <= h) {
         double expanded_w = w * (1.0 + ratio_);
         double center_x = original_box.x + w / 2.0;
@@ -519,13 +518,13 @@ void SegmentPostProcessor::generateMask(
     int net_w = target_size.width;
     int net_h = target_size.height;
 
-    // 计算在 proto 特征图中的ROI
+    // Calculate ROI in proto feature map
     int r_x = floor((box.x * transform_params[0] + transform_params[2]) / net_w * seg_w);
     int r_y = floor((box.y * transform_params[1] + transform_params[3]) / net_h * seg_h);
     int r_w = ceil(((box.x + box.width) * transform_params[0] + transform_params[2]) / net_w * seg_w) - r_x;
     int r_h = ceil(((box.y + box.height) * transform_params[1] + transform_params[3]) / net_h * seg_h) - r_y;
 
-    // 边界检查
+    // Boundary check
     r_x = std::max(0, std::min(r_x, seg_w - 1));
     r_y = std::max(0, std::min(r_y, seg_h - 1));
     r_w = std::max(1, std::min(r_w, seg_w - r_x));
@@ -535,7 +534,7 @@ void SegmentPostProcessor::generateMask(
     cv::Mat temp_mask = protos(roi_ranges).clone();
     cv::Mat protos_reshaped = temp_mask.reshape(0, {mask_channels_, r_w * r_h});
 
-    // 将coeffs转换为Mat并进行矩阵乘法
+    // Convert coeffs to a Mat and perform matrix multiplication
     cv::Mat coeffs_mat(1, coeffs.size(), CV_32F, (void*)coeffs.data());
     cv::Mat matmul_result = (coeffs_mat * protos_reshaped).t();
     cv::Mat mask_feature = matmul_result.reshape(1, {r_h, r_w});
@@ -554,7 +553,6 @@ void SegmentPostProcessor::generateMask(
     cv::Mat resized_mask;
     cv::resize(sigmoid_mask, resized_mask, cv::Size(width, height));
 
-    // 计算ROI IoU
     cv::Rect roi(left, top, width, height);
     cv::Rect intersection = box & roi;
 
@@ -563,19 +561,17 @@ void SegmentPostProcessor::generateMask(
         return;
     }
 
-    // 计算在 resized_mask 中的ROI
+    // Calculate ROI in resized_mask
     cv::Rect roi_in_mask(intersection.x - left, intersection.y - top, 
                         intersection.width, intersection.height);
     roi_in_mask = roi_in_mask & cv::Rect(0, 0, width, height);
 
-    // 计算在输出掩码中的 ROI
+    // Calculate the ROI in the output mask
     cv::Rect roi_in_bound(intersection.x - box.x, intersection.y - box.y, 
                          roi_in_mask.width, roi_in_mask.height);
 
-    // 创建输出掩码
     mask_out = cv::Mat::zeros(box.size(), CV_8UC1);
 
-    // 复制掩码数据
     if (!resized_mask.empty() && roi_in_mask.width > 0 && roi_in_mask.height > 0) {
         cv::Mat binary_mask = resized_mask(roi_in_mask) > 0.5;
         binary_mask.copyTo(mask_out(roi_in_bound));

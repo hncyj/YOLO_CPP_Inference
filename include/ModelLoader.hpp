@@ -10,7 +10,7 @@
 #include <openvino/openvino.hpp>
 
 /**
- * @brief 推理框架类型枚举
+ * @brief Inference engine type enumeration
  */
 enum class InferenceEngine {
     OPENVINO,
@@ -60,14 +60,14 @@ public:
 
 
 /**
- * @brief 推理框架工厂类
+ * @brief Inference engine factory class
  */
 class InferenceEngineFactory {
 public:
     /**
-     * @brief 推理框架工厂类
-     * @param model_path 模型文件路径
-     * @return 推理框架类型
+     * @brief Get inference engine type from model path
+     * @param model_path Path to the model file
+     * @return Inference engine type
      */
     static InferenceEngine getEngineFromModelPath(const std::string& model_path) {
         size_t dot_pos = model_path.find_last_of('.');
@@ -85,15 +85,15 @@ public:
     }
     
     /**
-     * @brief 创建推理 engine
-     * @param engine_type engine 类型
-     * @return 推理 engine std::unique_ptr
+     * @brief Create inference engine instance
+     * @param engine_type Engine type
+     * @return Unique pointer to inference engine
      */
     static std::unique_ptr<ModelInferBase> createInferenceEngine(InferenceEngine engine_type);
 };
 
 /**
- * @brief ONNX Runtime
+ * @brief ONNX Runtime inference implementation
  */
 class ONNXRuntimeInference : public ModelInferBase {
 private:
@@ -118,7 +118,7 @@ public:
 };
 
 /**
- * @brief OpenVINO
+ * @brief OpenVINO inference implementation
  */
 class OpenVINOInference : public ModelInferBase {
 private:

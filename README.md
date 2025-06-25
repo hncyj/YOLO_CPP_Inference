@@ -47,7 +47,7 @@ public:
 | `model_path` | `std::string` | ONNX model file path | Required |
 | `task_type` | `YOLOTaskType` | Task type (DETECT/POSE/SEGMENT) | Required |
 | `class_nums` | `int` | Number of classes | Required |
-| `roi` | `cv::Rect` | Region of interest (x, y, width, height) | Empty (process entire image) |
+| `roi` | `cv::Rect` | Region of interest (x, y, width, height) crop in image. | Empty (process entire image) |
 | `config` | `PostProcessConfig` | Postprocessing configuration (confidence threshold, NMS threshold) | Default configuration |
 | `device` | `std::string` | Inference device ("CPU", "GPU") | "CPU" |
 | `cache_dir` | `std::string` | Model compilation cache directory | "model_compile_cache" |
@@ -82,6 +82,21 @@ PostProcessConfig config(
 );
 ```
 
+
+### RoI Usage Example
+
+```cpp
+cv::Rect roi(100, 100, 640, 640);
+
+YOLOPipeline pipeline(
+    model_path,
+    YOLOTaskType::DETECT,
+    class_nums,
+    roi,  // RoI configuration
+    config
+);
+```
+
 ## Complete Usage Example
 
 ### Usage Example
@@ -104,7 +119,8 @@ int main() {
         const std::string model_path = "../models/seg/triseg20250520.onnx";
 
         PostProcessConfig config(0.1f, 0.7f);
-        cv::Rect roi = cv::Rect(540, 765, 200, 200);
+        
+        cv::Rect roi = cv::Rect(540, 765, 640, 640);
 
         const int class_nums = 1;
         const std::vector<std::string> class_names = { "seg_results" };
@@ -227,7 +243,7 @@ struct SegmentObj : public DetectObj {
 1. **Thread Safety**: The current implementation does not guarantee thread safety; additional synchronization is required for multi-threaded usage
 2. **Memory Management**: Ensure input images are valid and avoid passing empty images
 3. **Model Compatibility**: Ensure model format matches the task type
-4. **RoI Boundaries**: RoI region should be within image bounds; the framework automatically handles boundary cases
+
 
 ## Dependencies
 

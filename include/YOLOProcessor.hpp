@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <string>
@@ -11,11 +10,11 @@
 #include <algorithm>
 
 /**
- * @brief 预处理结果结构体 
+ * @brief Preprocessing result structure
  * 
- * @param processed_img cv::Mat 处理后的图像数据
- * @param transfrom_params cv::Vec4d (ratio_w, ratio_h, offset_x, offset_y) 结果图像与原图的比
- * @param original_size cv::Size 原图尺寸
+ * @param processed_img cv::Mat Processed image data
+ * @param transfrom_params cv::Vec4d (ratio_w, ratio_h, offset_x, offset_y) Ratio between result image and original image
+ * @param original_size cv::Size Original image size
  */
 struct PreProcessResult {
     cv::Mat processed_img;
@@ -29,12 +28,12 @@ public:
     /**
      * @brief YOLOPreProcessor constructor
      * 
-     * @param target_size 目标尺寸, 默认640x640
-     * @param auto_size 是否自动调整填充尺寸, 默认false
-     * @param scale_fill 是否使用拉伸填充, 默认false
-     * @param scale_up 是否允许放大小于输入尺寸的图像, 默认true
-     * @param center 是否居中放置, 默认true
-     * @param stride 步长参数, 模型最大下采样倍率, 默认32
+     * @param target_size Target size, default 640x640
+     * @param auto_size Whether to automatically adjust padding size, default false
+     * @param scale_fill Whether to use stretch filling, default false
+     * @param scale_up Whether to allow upscaling of images smaller than input size, default true
+     * @param center Whether to center the image, default true
+     * @param stride Stride parameter, model's maximum downsampling ratio, default 32
      */
     YOLOPreProcessor(
         cv::Size target_size = cv::Size(640, 640), 
@@ -46,20 +45,20 @@ public:
     );
 
     /**
-     * @brief 图像预处理函数
+     * @brief Image preprocessing function
      * 
-     * @param img cv::Mat 输入图像
-     * @return PreprocessResult 预处理结果，包含处理后图像和变换参数
+     * @param img cv::Mat Input image
+     * @return PreprocessResult Preprocessing result, including processed image and transform parameters
      */
     PreProcessResult preprocess(const cv::Mat& img);
     
     /**
-     * @brief 将预处理后图像中的坐标转换回原图坐标
+     * @brief Transform coordinates from preprocessed image back to original image
      * 
-     * @param point cv::Point2f& 预处理后图像中的点坐标
-     * @param transform_params cv::Vec4d& 变换参数
-     * @param original_size cv::Size 原图尺寸
-     * @return cv::Point2f 原图中的坐标
+     * @param point cv::Point2f& Point coordinates in preprocessed image
+     * @param transform_params cv::Vec4d& Transform parameters
+     * @param original_size cv::Size Original image size
+     * @return cv::Point2f Coordinates in original image
      */
     cv::Point2f transformCoordinate(
         const cv::Point2f& point, 
@@ -68,17 +67,17 @@ public:
     );
 
 private:
-    cv::Size target_size_;      // 目标尺寸
-    bool auto_size_;            // 是否自动调整填充尺寸
-    bool scale_fill_;           // 是否使用拉伸填充
-    bool scale_up_;             // 是否允许放大
-    bool center_;               // 是否居中放置
-    int stride_;                // 步长参数
+    cv::Size target_size_;      // Target size
+    bool auto_size_;            // Whether to auto-adjust padding size
+    bool scale_fill_;           // Whether to use stretch filling
+    bool scale_up_;             // Whether to allow upscaling
+    bool center_;               // Whether to center the image
+    int stride_;                // Stride parameter
 };
 
 
 /**
- * @brief YOLO模型任务类型枚举类
+ * @brief YOLO model task type enumeration
  */
 enum class YOLOTaskType {
     DETECT,
@@ -88,10 +87,10 @@ enum class YOLOTaskType {
 
 
 /**
- * @brief Detect 模型后处理结果结构体
- * @param class_idx 类别id
- * @param conf 类别置信度
- * @param bbox 类别检测框: (x, y, w, h)
+ * @brief Detection model post-processing result structure
+ * @param class_idx Class ID
+ * @param conf Class confidence
+ * @param bbox Bounding box: (x, y, w, h)
  */
 struct DetectObj {
     int class_idx;
@@ -104,11 +103,11 @@ struct DetectObj {
 
 
 /**
- * @brief Pose 模型后处理结果结构体
- * @param class_idx 类别id
- * @param conf 类别置信度
- * @param bbox 类别检测框: (x, y, w, h)
- * @param kpts 关键点数组: (x, y, conf) * kpt_nums
+ * @brief Pose model post-processing result structure
+ * @param class_idx Class ID
+ * @param conf Class confidence
+ * @param bbox Bounding box: (x, y, w, h)
+ * @param kpts Keypoints array: (x, y, conf) * kpt_nums
  */
 struct PoseObj : public DetectObj {
     std::vector<cv::Point3f> kpts; // array of (x, y, conf)
@@ -119,11 +118,11 @@ struct PoseObj : public DetectObj {
 
 
 /**
- * @brief Segment 模型后处理结果结构体
- * @param class_idx 类别id
- * @param conf 类别置信度
- * @param bbox 类别检测框: (x, y, w, h)
- * @param mask segment 模型对输入预测的分割掩码
+ * @brief Segmentation model post-processing result structure
+ * @param class_idx Class ID
+ * @param conf Class confidence
+ * @param bbox Bounding box: (x, y, w, h)
+ * @param mask Segmentation mask predicted by the model
  */
 struct SegmentObj : public DetectObj {
     cv::Mat mask;
@@ -134,13 +133,13 @@ struct SegmentObj : public DetectObj {
 
 
 /**
- * @brief PostProcess 配置结构体
- * @param conf_thresh 类别置信度阈值
- * @param nms_thresh nms(iou) 阈值
+ * @brief PostProcess configuration structure
+ * @param conf_thresh Confidence threshold
+ * @param nms_thresh NMS(IoU) threshold
  */
 struct PostProcessConfig {
-    float conf_thresh = 0.2f;      // 置信度阈值
-    float nms_thresh = 0.7f;       // NMS(IoU) 阈值
+    float conf_thresh = 0.2f;      // Confidence threshold
+    float nms_thresh = 0.7f;       // NMS(IoU) threshold
     
     PostProcessConfig() = default;
     PostProcessConfig(float conf_thresh, float nms_thresh): conf_thresh(conf_thresh), nms_thresh(nms_thresh) {};
@@ -183,27 +182,27 @@ public:
  */
 class SegmentPostProcessor : public DetectPostProcessor {
 private:
-    int mask_channels_;    // 掩码通道数, 默认值: 32
-    float ratio_;          // 检测框较短边拓展比例 ratio_, 防止边界框过度切割掩码
-    cv::Size mask_size_;   // 掩码尺寸, 默认值: 320 * 320
+    int mask_channels_;    // Number of mask channels, default: 32
+    float ratio_;          // Expansion ratio for shorter side of detection box to prevent excessive mask cropping
+    cv::Size mask_size_;   // Mask size, default: 320 * 320
 
     /**
-     * @brief 拓展预测框的较短边, 防止矩形框过度截断 mask
+     * @brief Expand the shorter side of prediction box to prevent excessive mask cropping
      * 
-     * @param rect 矩形框
-     * @param origin_size 原始图像尺寸
+     * @param rect Rectangle box
+     * @param origin_size Original image size
      */
     cv::Rect expandRect(const cv::Rect& rect, const cv::Size& origin_size);
     
     /**
-     * @brief 生成分割掩码
+     * @brief Generate segmentation mask
      * 
-     * @param coeffs 掩码系数
-     * @param protos 原型掩码
-     * @param transform_params 变换参数
-     * @param original_size 原始图像尺寸
-     * @param box 检测框
-     * @param mask_out 输出掩码
+     * @param coeffs Mask coefficients
+     * @param protos Prototype masks
+     * @param transform_params Transform parameters
+     * @param original_size Original image size
+     * @param box Detection box
+     * @param mask_out Output mask
      */
     void generateMask(
         const std::vector<float>& coeffs, const cv::Mat& protos, 
@@ -218,9 +217,9 @@ public:
 
 
 /**
- * @brief 后处理器工厂类
+ * @brief Post-processor factory class
  * 
- * 当前支持 DETECT, POSE, SEGMENT 三种 YOLO 任务的后处理
+ * Supports post-processing for three tasks: DETECT, POSE, SEGMENT
  */
 class PostProcessorFactory {
 public:

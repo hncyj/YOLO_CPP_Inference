@@ -9,21 +9,21 @@
 #include <map>
 
 /**
- * @brief YOLO结果可视化工具类
+ * @brief YOLO result visualization utility class
  */
 class YOLOVisualizer {
 private:
-    // 配色方案 (BGR格式)
+    // Color scheme (BGR format)
     static const std::vector<cv::Scalar> DEFAULT_COLORS;
     
 public:
     /**
-     * @brief 保存检测结果可视化图像
-     * @param output_path 输出图像路径
-     * @param img 原始图像
-     * @param results 检测结果
-     * @param class_names 类别名称数组
-     * @param colors 颜色列表（可选，默认使用内置配色）
+     * @brief Save detection result visualization image
+     * @param output_path Output image path
+     * @param img Original image
+     * @param results Detection results
+     * @param class_names Class name array
+     * @param colors Color list (optional, uses built-in colors by default)
      */
     static void saveDetectResults(
         const std::string& output_path, 
@@ -34,13 +34,13 @@ public:
     );
     
     /**
-     * @brief 保存姿态检测结果可视化图像
-     * @param output_path 输出图像路径
-     * @param img 原始图像
-     * @param results 姿态检测结果
-     * @param class_names 类别名称列表
-     * @param colors 颜色列表（可选，默认使用内置配色）
-     * @param kpt_color 关键点颜色（可选）
+     * @brief Save pose detection result visualization image
+     * @param output_path Output image path
+     * @param img Original image
+     * @param results Pose detection results
+     * @param class_names Class name list
+     * @param colors Color list (optional, uses built-in colors by default)
+     * @param kpt_color Keypoint color (optional)
      */
     static void savePoseResults(
         const std::string& output_path, 
@@ -53,13 +53,13 @@ public:
     );
     
     /**
-     * @brief 保存分割结果可视化图像
-     * @param output_path 输出图像路径
-     * @param img 原始图像
-     * @param results 分割结果
-     * @param class_names 类别名称列表
-     * @param colors 颜色列表（可选，默认使用内置配色）
-     * @param alpha 掩码透明度 (0.0-1.0)
+     * @brief Save segmentation result visualization image
+     * @param output_path Output image path
+     * @param img Original image
+     * @param results Segmentation results
+     * @param class_names Class name list
+     * @param colors Color list (optional, uses built-in colors by default)
+     * @param alpha Mask transparency (0.0-1.0)
      */
     static void saveSegmentResults(
         const std::string& output_path, 
@@ -71,11 +71,11 @@ public:
     );
 
     /**
-     * @brief 绘制检测结果到图像上（不保存）
-     * @param img 图像（会被修改）
-     * @param results 检测结果
-     * @param class_names 类别名称列表
-     * @param colors 颜色列表（可选，默认使用内置配色）
+     * @brief Draw detection results on image (without saving)
+     * @param img Image (will be modified)
+     * @param results Detection results
+     * @param class_names Class name list
+     * @param colors Color list (optional, uses built-in colors by default)
      */
     static void drawDetectResults(
         cv::Mat& img,
@@ -85,13 +85,13 @@ public:
     );
 
     /**
-     * @brief 绘制姿态结果到图像上（不保存）
-     * @param img 图像（会被修改）
-     * @param results 姿态检测结果
-     * @param class_names 类别名称列表
-     * @param colors 颜色列表（可选，默认使用内置配色）
-     * @param kpt_color 关键点颜色（可选）
-     * @param kpt_threshold 关键点置信度阈值
+     * @brief Draw pose results on image (without saving)
+     * @param img Image (will be modified)
+     * @param results Pose detection results
+     * @param class_names Class name list
+     * @param colors Color list (optional, uses built-in colors by default)
+     * @param kpt_color Keypoint color (optional)
+     * @param kpt_threshold Keypoint confidence threshold
      */
     static void drawPoseResults(
         cv::Mat& img,
@@ -104,12 +104,12 @@ public:
     );
 
     /**
-     * @brief 绘制分割结果到图像上（不保存）
-     * @param img 图像（会被修改）
-     * @param results 分割结果
-     * @param class_names 类别名称列表
-     * @param colors 颜色列表（可选，默认使用内置配色）
-     * @param alpha 掩码透明度
+     * @brief Draw segmentation results on image (without saving)
+     * @param img Image (will be modified)
+     * @param results Segmentation results
+     * @param class_names Class name list
+     * @param colors Color list (optional, uses built-in colors by default)
+     * @param alpha Mask transparency
      */
     static void drawSegmentResults(
         cv::Mat& img,
@@ -120,27 +120,27 @@ public:
     );
 
     /**
-     * @brief 获取默认颜色列表
-     * @return 默认颜色向量
+     * @brief Get default color list
+     * @return Default color vector
      */
     static const std::vector<cv::Scalar>& getDefaultColors();
     
     /**
-     * @brief 为指定类别获取颜色
-     * @param class_idx 类别索引
-     * @param colors 颜色列表（如果为空则使用默认颜色）
-     * @return 对应的颜色
+     * @brief Get color for specific class
+     * @param class_idx Class index
+     * @param colors Color list (uses default colors if empty)
+     * @return Corresponding color
      */
     static cv::Scalar getColorForClass(int class_idx, const std::vector<cv::Scalar>& colors = {});
 
 private:
     /**
-     * @brief 绘制标签文本
-     * @param img 图像
-     * @param text 文本内容
-     * @param position 文本位置
-     * @param color 文本颜色
-     * @param font_scale 字体大小
+     * @brief Draw label text
+     * @param img Image
+     * @param text Text content
+     * @param position Text position
+     * @param color Text color
+     * @param font_scale Font size
      */
     static void drawLabel(
         cv::Mat& img,

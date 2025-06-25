@@ -5,7 +5,7 @@
 #include <sstream>
 #include <fstream>
 
-// 定义默认配色方案 (BGR格式)
+// Define default color scheme (BGR format)
 const std::vector<cv::Scalar> YOLOVisualizer::DEFAULT_COLORS = {
     cv::Scalar(239, 57, 136),   // #8839ef -> BGR(239, 57, 136)
     cv::Scalar(120, 138, 220),  // #dc8a78 -> BGR(120, 138, 220)
@@ -22,10 +22,10 @@ cv::Scalar YOLOVisualizer::getColorForClass(int class_idx, const std::vector<cv:
     const auto& color_list = colors.empty() ? DEFAULT_COLORS : colors;
     
     if (color_list.empty()) {
-        return cv::Scalar(0, 255, 0);  // 默认绿色
+        return cv::Scalar(0, 255, 0);  // Default green
     }
     
-    // 使用模运算循环使用颜色
+    // Use modulo operation to cycle colors
     return color_list[class_idx % color_list.size()];
 }
 
@@ -40,7 +40,7 @@ void YOLOVisualizer::saveDetectResults(
     drawDetectResults(vis_img, results, class_names, colors);
     
     if (!cv::imwrite(output_path, vis_img)) {
-        std::cerr << "保存检测结果失败: " << output_path << std::endl;
+        std::cerr << "Failed to save detection results: " << output_path << std::endl;
     }
 }
 
@@ -57,7 +57,7 @@ void YOLOVisualizer::savePoseResults(
     drawPoseResults(vis_img, results, class_names, kpt_idx, colors, kpt_color);
     
     if (!cv::imwrite(output_path, vis_img)) {
-        std::cerr << "保存姿态结果失败: " << output_path << std::endl;
+        std::cerr << "Failed to save pose results: " << output_path << std::endl;
     }
 }
 
@@ -73,7 +73,7 @@ void YOLOVisualizer::saveSegmentResults(
     drawSegmentResults(vis_img, results, class_names, colors, alpha);
     
     if (!cv::imwrite(output_path, vis_img)) {
-        std::cerr << "保存分割结果失败: " << output_path << std::endl;
+        std::cerr << "Failed to save segmentation results: " << output_path << std::endl;
     }
 }
 
@@ -86,10 +86,10 @@ void YOLOVisualizer::drawDetectResults(
     for (const auto& obj : results) {
         cv::Scalar color = getColorForClass(obj.class_idx, colors);
         
-        // 绘制边界框
+        // Draw bounding box
         cv::rectangle(img, obj.bbox, color, 2);
         
-        // 准备标签文本
+        // Prepare label text
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2);
         
@@ -99,7 +99,7 @@ void YOLOVisualizer::drawDetectResults(
             ss << "Class" << obj.class_idx << ": " << obj.conf;
         }
         
-        // 绘制标签
+        // Draw label
         drawLabel(img, ss.str(), cv::Point(obj.bbox.x, obj.bbox.y - 10), color);
     }
 }
@@ -138,7 +138,7 @@ void YOLOVisualizer::drawPoseResults(
             //            cv::FONT_HERSHEY_SIMPLEX, 0.4, kpt_color, 1);
         }
 
-        // 准备标签文本
+        // Prepare label text
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2);
         
@@ -168,10 +168,10 @@ void YOLOVisualizer::drawSegmentResults(
         
         if (!obj.mask.empty()) {
             try {
-                // 确保掩码区域在图像范围内
+                // Ensure mask region is within image bounds
                 cv::Rect safe_bbox = obj.bbox & cv::Rect(0, 0, img.cols, img.rows);
                 if (safe_bbox.width > 0 && safe_bbox.height > 0) {
-                    // 调整掩码尺寸以匹配边界框
+                    // Resize mask to match bounding box
                     cv::Mat resized_mask;
                     if (obj.mask.size() != safe_bbox.size()) {
                         cv::resize(obj.mask, resized_mask, safe_bbox.size());
@@ -182,11 +182,11 @@ void YOLOVisualizer::drawSegmentResults(
                     mask_overlay(safe_bbox).setTo(color, resized_mask);
                 }
             } catch (const cv::Exception& e) {
-                std::cerr << "绘制掩码时出错: " << e.what() << std::endl;
+                std::cerr << "Error occurred while drawing mask: " << e.what() << std::endl;
             }
         }
         
-        // 准备标签文本
+        // Prepare label text
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2);
         
@@ -199,7 +199,7 @@ void YOLOVisualizer::drawSegmentResults(
         drawLabel(img, ss.str(), cv::Point(obj.bbox.x, obj.bbox.y - 10), color);
     }
     
-    // 融合原图和掩码覆盖层
+    // Blend original image with mask overlay
     cv::addWeighted(img, 1.0f - alpha, mask_overlay, alpha, 0, img);
 }
 
@@ -227,18 +227,18 @@ void YOLOVisualizer::drawLabel(
         label_pos.x = img.cols - text_size.width;
     }
     
-    // 绘制文本背景
+    // Draw text background
     cv::Point bg_p1(label_pos.x - 2, label_pos.y - text_size.height - baseline - 2);
     cv::Point bg_p2(label_pos.x + text_size.width + 2, label_pos.y + baseline + 2);
     cv::rectangle(img, bg_p1, bg_p2, color, -1);
     
-    // 绘制文本 (使用白色或黑色文本，根据背景颜色自动选择)
+    // Draw text (use white or black text, chosen based on background brightness)
     cv::Scalar text_color;
     double brightness = (color[0] * 0.114 + color[1] * 0.587 + color[2] * 0.299);
     if (brightness > 127) {
-        text_color = cv::Scalar(0, 0, 0);  // 黑色文本
+        text_color = cv::Scalar(0, 0, 0);  // Black text
     } else {
-        text_color = cv::Scalar(255, 255, 255);  // 白色文本
+        text_color = cv::Scalar(255, 255, 255);  // White text
     }
     
     cv::putText(img, text, label_pos, font_face, font_scale, text_color, thickness);

@@ -6,23 +6,23 @@
 int main() {
     std::cout << "=== YOLO Pipeline Test ===" << std::endl;
     
-    // 创建输出目录
+    // Create output directory
     if (!std::filesystem::exists("../results")) { std::filesystem::create_directories("../results"); }
 
-    const std::string test_image = "../resources/images/2025_06_06_09_10_29_275_crop_0035.jpg";
+    const std::string test_image = "../resources/images20250530/22_original.jpg";
 
     try {
-        const std::string model_path = "../models/seg/triseg20250520.onnx";
+        const std::string model_path = "../models/pose/fd0.6_320.onnx";
 
         PostProcessConfig config(0.1f, 0.7f);
 
-        // 额外添加 RoI
-        cv::Rect roi = cv::Rect(540, 765, 200, 200);
+        // Additional RoI setup
+        cv::Rect roi = cv::Rect(450, 760, 200, 200);
 
-        const int class_nums = 1;
-        const std::vector<std::string> class_names = { "seg" };
+        const int class_nums = 2;
+        const std::vector<std::string> class_names = { "weldseam", "triweldseam" };
 
-        const auto TASK = YOLOTaskType::SEGMENT;
+        const auto TASK = YOLOTaskType::POSE;
      
         const float kpt_thresh = 0.5f;
 
@@ -31,9 +31,9 @@ int main() {
 
         bool use_NMS = true;
         
-        // 测试OpenVINO
+        // Test OpenVINO
         std::cout << "\n=== OpenVINO Test ===" << std::endl;
-        {   // Detect model test.
+        {   
             YOLOPipeline pipeline(
                 model_path,
                 TASK,
@@ -62,7 +62,7 @@ int main() {
                         break;
                     }
                     case YOLOTaskType::SEGMENT: {
-                        auto results = pipeline.segInfer(img, true); // segment 必须使用 NMS
+                        auto results = pipeline.segInfer(img, true); // NMS must be used for segmentation
                         std::cout << "Segmented: " << results.size() << " objects" << std::endl;
                         YOLOVisualizer::saveSegmentResults("../results/ov_segment.jpg", img, results, class_names);
                         break;
