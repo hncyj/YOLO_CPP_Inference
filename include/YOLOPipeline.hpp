@@ -43,7 +43,7 @@ private:
     // infer engine type
     std::unique_ptr<ModelInferBase> inference_engine_;
     
-    // pre post processsor
+    // pre post processor
     YOLOPreProcessor yolo_preprocessor_;
     std::unique_ptr<DetectPostProcessor> postprocessor_;
     
@@ -67,42 +67,48 @@ public:
 
     ~YOLOPipeline() = default;
 
-    // 推理方法
+    // Inference methods
     std::vector<DetectObj> detectInfer(const cv::Mat& image, bool use_NMS = false);
     std::vector<PoseObj> poseInfer(const cv::Mat& image, bool use_NMS = false);
     std::vector<SegmentObj> segInfer(const cv::Mat& image, bool use_NMS = true);
+
+    // Set ROI
+    void setRoI(const cv::Rect& roi) { this->roi_ = roi; };
     
-    // 获取模型加载信息
+    // Get model loading status
     bool isLoaded() const { return inference_engine_ && inference_engine_->isLoaded(); }
+
+    // Get model input size
+    cv::Size getModelInputSize() { return this->target_size_; }
 
 private:
     /**
-     * @brief 初始化推理引擎和后处理器
+     * @brief Initialize inference engine and post-processor
      */
     void initializeEngine();
     
     /**
-     * @brief 加载模型
+     * @brief Load model
      */
     bool loadModel();
     
     /**
-     * @brief 调用推理
+     * @brief Run inference
      */
     bool runInference(const cv::Mat& preprocessed_img, std::vector<cv::Mat>& outputs);
 
     /**
-     * @brief 根据RoI设置裁剪图像
-     * @param image 输入图像
-     * @param roi_offset 输出RoI偏移量 (offset_x, offset_y) 用于后处理坐标变换
-     * @return 裁剪后的图像
+     * @brief Crop image with RoI
+     * @param image Input image
+     * @param roi_offset Output RoI offset (offset_x, offset_y) for coordinate transformation in post-processing
+     * @return Cropped image
      */
     cv::Mat cropImageWithRoI(const cv::Mat& image, cv::Vec2d& roi_offset);
 
     /**
-     * @brief 将RoI坐标系下的结果转换回原图坐标系
-     * @param results 检测结果
-     * @param roi_offset 输出RoI偏移量 (offset_x, offset_y) 用于后处理坐标变换
+     * @brief Transform detection results from RoI coordinates to original image coordinates
+     * @param results Detection results
+     * @param roi_offset RoI offset (offset_x, offset_y) for coordinate transformation
      */
     template<typename T>
     void transformResultsToOriginal(std::vector<T>& results, const cv::Vec2d& roi_offset);
