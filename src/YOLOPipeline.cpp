@@ -36,7 +36,7 @@ void YOLOPipeline::initializeEngine() {
 
     this->yolo_preprocessor_ = YOLOPreProcessor(this->target_size_);
 
-    // 获取输出的数量, 根据任务类型对相应参数进行赋值
+    // Get number of outputs and set corresponding parameters based on task type
     auto output_shapes = this->inference_engine_->getOutputShapes();
     if (output_shapes.size() == 1 && (task_type_ == YOLOTaskType::DETECT || task_type_ == YOLOTaskType::POSE)) { 
         if (task_type_ == YOLOTaskType::POSE) {
@@ -47,7 +47,7 @@ void YOLOPipeline::initializeEngine() {
         this->mask_size_ = cv::Size(output_shapes[1][2], output_shapes[1][3]);
 
     } else {
-        throw std::runtime_error("Task output size dosn't cosistent with model outputs");
+        throw std::runtime_error("Task output size doesn't consistent with model outputs");
     }
 
     switch (task_type_) {
@@ -91,36 +91,27 @@ bool YOLOPipeline::runInference(const cv::Mat& preprocessed_img, std::vector<cv:
 }
 
 cv::Mat YOLOPipeline::cropImageWithRoI(const cv::Mat& image, cv::Vec2d& roi_offset) {
-    roi_offset = cv::Vec2d(0, 0); // 默认无偏移
+    roi_offset = cv::Vec2d(0, 0); // default: without offset
     
-    // 如果RoI为空、大小为0或与图像尺寸相同，则处理整图
     if (roi_.empty() || roi_.width <= 0 || roi_.height <= 0 || 
         (roi_.width == image.cols && roi_.height == image.rows)) {
         return image;
     }
     
-    // RoI模式：从RoI中心裁剪与模型输入尺寸相同的区域
-    int crop_width = target_size_.width;
-    int crop_height = target_size_.height;
+    if (roi_.width != target_size_.width || roi_.height != target_size_.height) {
+        std::cerr << "RoI Size error: RoI size (" << roi_.width << "x" << roi_.height 
+        << ") does not match target size (" << target_size_.width << "x" << target_size_.height 
+        << "). Using entire RoI." << std::endl;
+    }
+
+    int crop_x = std::max(0, std::min(roi_.x, image.cols - roi_.width));
+    int crop_y = std::max(0, std::min(roi_.y, image.rows - roi_.height));
     
-    int roi_center_x = roi_.x + roi_.width / 2;
-    int roi_center_y = roi_.y + roi_.height / 2;
+    int crop_width = std::min(roi_.width, image.cols - crop_x);
+    int crop_height = std::min(roi_.height, image.rows - crop_y);
     
-    int crop_x = roi_center_x - crop_width / 2;
-    int crop_y = roi_center_y - crop_height / 2;
-    
-    // 边界检查和调整
-    crop_x = std::max(0, std::min(crop_x, image.cols - crop_width));
-    crop_y = std::max(0, std::min(crop_y, image.rows - crop_height));
-    
-    // 如果图像太小，无法裁剪出目标尺寸，则调整裁剪尺寸
-    crop_width = std::min(crop_width, image.cols - crop_x);
-    crop_height = std::min(crop_height, image.rows - crop_y);
-    
-    // 记录实际的裁剪偏移，用于后处理坐标变换
     roi_offset = cv::Vec2d(crop_x, crop_y);
     
-    // 裁剪图像
     cv::Rect crop_rect(crop_x, crop_y, crop_width, crop_height);
     cv::Mat cropped = image(crop_rect).clone();
     
@@ -130,27 +121,27 @@ cv::Mat YOLOPipeline::cropImageWithRoI(const cv::Mat& image, cv::Vec2d& roi_offs
 
 template<typename T>
 void YOLOPipeline::transformResultsToOriginal(std::vector<T>& results, const cv::Vec2d& roi_offset) {
-    // 如果RoI为空或无偏移，无需变换
+    // Skip transformation if RoI is empty or has no offset
     if (roi_.empty() || (roi_offset[0] == 0 && roi_offset[1] == 0)) {
         return;
     }
     
     for (auto& result : results) {
-        // 变换边界框
+        // Transform bounding box
         result.bbox.x += static_cast<int>(roi_offset[0]);
         result.bbox.y += static_cast<int>(roi_offset[1]);
         
-        // 如果是姿态检测，还需要变换关键点
+        // For pose detection, transform keypoints as well
         if constexpr (std::is_same_v<T, PoseObj>) {
             for (auto& kpt : result.kpts) {
-                if (kpt.x >= 0 && kpt.y >= 0) { // 只变换有效关键点
+                if (kpt.x >= 0 && kpt.y >= 0) { // Only transform valid keypoints
                     kpt.x += static_cast<float>(roi_offset[0]);
                     kpt.y += static_cast<float>(roi_offset[1]);
                 }
             }
         }
         
-        // 分割掩码坐标已经是相对于边界框的，无需额外变换
+        // Segmentation mask coordinates are relative to bounding box, no need for additional transformation
     }
 }
 
