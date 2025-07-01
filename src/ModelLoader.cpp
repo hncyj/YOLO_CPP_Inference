@@ -33,7 +33,7 @@ bool ONNXRuntimeInference::loadModel(const std::string& model_path) {
         std::cerr << "ONNX Runtime environment not initialized" << std::endl;
         return false;
     }
-    
+
     try {
         // Create session options
         Ort::SessionOptions session_options;

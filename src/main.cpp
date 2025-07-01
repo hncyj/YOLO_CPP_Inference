@@ -9,10 +9,10 @@ int main() {
     // Create output directory
     if (!std::filesystem::exists("../results")) { std::filesystem::create_directories("../results"); }
 
-    const std::string test_image = "../resources/images20250530/22_original.jpg";
+    const std::string test_image = "";
 
     try {
-        const std::string model_path = "../models/pose/fd0.6_320.onnx";
+        const std::string model_path = "";
 
         PostProcessConfig config(0.1f, 0.7f);
 
@@ -20,7 +20,7 @@ int main() {
         cv::Rect roi = cv::Rect(450, 760, 200, 200);
 
         const int class_nums = 2;
-        const std::vector<std::string> class_names = { "weldseam", "triweldseam" };
+        const std::vector<std::string> class_names = { "cls_name1", "cls_name2" };
 
         const auto TASK = YOLOTaskType::POSE;
      
@@ -52,7 +52,7 @@ int main() {
                     case YOLOTaskType::DETECT: {
                         auto results = pipeline.detectInfer(img, use_NMS); // whether use NMS
                         std::cout << "Detected: " << results.size() << " objects" << std::endl;
-                        // YOLOVisualizer::saveDetectResults("../results/ov_detect.jpg", img, results, class_names);
+                        YOLOVisualizer::saveDetectResults("../results/ov_detect.jpg", img, results, class_names);
                         break;
                     }
                     case YOLOTaskType::POSE: {
