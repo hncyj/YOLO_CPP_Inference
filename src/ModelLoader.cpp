@@ -31,7 +31,7 @@ YOLOStatusCode ONNXRuntimeInference::initialize() {
     }
 }
 
-cv::Mat ONNXRuntimeInference::convertInput(const cv::Mat& preprocessed_img) {
+cv::Mat ONNXRuntimeInference::convertInput(const cv::Mat& preprocessed_img, const bool use_xyzg) {
     cv::Size input_size = preprocessed_img.size();
     return cv::dnn::blobFromImage(preprocessed_img, 1 / 255.0, input_size, cv::Scalar(0, 0, 0), true, false);
 }
@@ -216,9 +216,29 @@ YOLOStatusCode OpenVINOInference::initialize() {
     return YOLOStatusCode::SUCCESS;
 }
 
-cv::Mat OpenVINOInference::convertInput(const cv::Mat& preprocessed_img) {
+cv::Mat OpenVINOInference::convertInput(const cv::Mat& preprocessed_img, const bool use_xyzg) {
     cv::Mat input;
-    preprocessed_img.convertTo(input, CV_32F, 1.0 / 255.0);
+
+    if (!use_xyzg) { 
+        preprocessed_img.convertTo(input, CV_32F, 1.0 / 255.0);
+    }
+    else {
+        preprocessed_img.copyTo(input);
+        std::vector<cv::Mat> channels;
+        cv::split(input, channels);
+        double min_val, max_val;
+        cv::minMaxLoc(channels[1], &min_val, &max_val);
+
+        if (max_val > 0) { 
+            channels[0] /= max_val;
+            channels[1] /= max_val;
+        }
+
+        channels[2] /= 65535;
+        
+        cv::merge(channels, input);
+    }
+
     return input;
 }
 

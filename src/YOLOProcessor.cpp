@@ -75,7 +75,7 @@ PreProcessResult YOLOPreProcessor::preprocess(const cv::Mat& img) {
         copyMakeBorder(
             resized_img, result.processed_img,
             pad_top, pad_bottom, pad_left, pad_right,
-            cv::BORDER_CONSTANT, cv::Scalar::all(114) // 与 YOLO 训练填充颜色保持一致
+            cv::BORDER_CONSTANT, cv::Scalar::all(0) // 与 YOLO 训练填充颜色保持一致
         );
     }
     else {

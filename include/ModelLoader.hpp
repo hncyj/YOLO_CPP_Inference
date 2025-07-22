@@ -30,7 +30,7 @@ public:
      * @param preprocessed_img img after preprocessed
      * @return cv::Mat img after convert
      */
-    virtual cv::Mat convertInput(const cv::Mat& preprocessed_img) = 0;
+    virtual cv::Mat convertInput(const cv::Mat& preprocessed_img, const bool use_xyzg) = 0;
     
     /**
      * @brief Run inference on input image
@@ -127,7 +127,7 @@ public:
     std::string getStatusMsg() const { return status_msg_; }
 
     bool loadModel(const std::string& model_path);
-    cv::Mat convertInput(const cv::Mat& preprocessed_img);
+    cv::Mat convertInput(const cv::Mat& preprocessed_img, const bool use_xyzg);
     bool infer(const cv::Mat& input_blob, std::vector<cv::Mat>& outputs) override;
     std::vector<int64_t> getInputShape() const override;
     std::vector<std::vector<int64_t>> getOutputShapes() const override;
@@ -158,7 +158,7 @@ public:
 
     bool loadModel(const std::string& model_path, const std::string& device = "CPU", const std::string& cache_dir = "model_compile_cache");
     bool infer(const cv::Mat& input_blob, std::vector<cv::Mat>& outputs) override;
-    cv::Mat convertInput(const cv::Mat& preprocessed_img) override;
+    cv::Mat convertInput(const cv::Mat& preprocessed_img, const bool use_xyzg) override;
     std::vector<int64_t> getInputShape() const override;
     std::vector<std::vector<int64_t>> getOutputShapes() const override;
     bool isLoaded() const override;

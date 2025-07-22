@@ -55,6 +55,9 @@ private:
     YOLOStatusCode status_code_;
     std::string status_msg_;
 
+    // use xyzg format cv::Mat
+    bool use_xyzg_;
+
     bool is_init_;
 
 public:
@@ -66,6 +69,7 @@ public:
         YOLOTaskType task_type,
         const int class_nums,
         const cv::Rect& roi = cv::Rect(),
+        const bool use_xyzg = false,
         const PostProcessConfig& config = PostProcessConfig(),
         const std::string& device = "CPU",
         const std::string& cache_dir = "model_compile_cache",

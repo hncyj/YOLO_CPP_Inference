@@ -1,7 +1,5 @@
 #include "YOLOPipeline.hpp"
-
 #include <opencv2/opencv.hpp>
-
 #include <optional>
 
 
@@ -10,6 +8,7 @@ YOLOPipeline::YOLOPipeline(
     const YOLOTaskType task_type,
     const int class_nums,
     const cv::Rect& roi,
+    const bool use_xyzg,
     const PostProcessConfig& config,
     const std::string& device,
     const std::string& cache_dir,
@@ -17,6 +16,7 @@ YOLOPipeline::YOLOPipeline(
 ) : model_path_(model_path),
     task_type_(task_type),
     cls_nums_(class_nums),
+    use_xyzg_(use_xyzg),
     config_(config),
     device_(device),
     cache_dir_(cache_dir),
@@ -50,7 +50,7 @@ bool YOLOPipeline::initializeEngine() {
     }
 
     auto input_shape = this->inference_engine_->getInputShape();
-    this->target_size_ = cv::Size(input_shape[2], input_shape[1]); // H, W
+    this->target_size_ = cv::Size(input_shape[2], input_shape[1]);
 
     this->yolo_preprocessor_ = YOLOPreProcessor(this->target_size_);
 
@@ -118,7 +118,7 @@ bool YOLOPipeline::loadModel() {
 }
 
 bool YOLOPipeline::runInference(const cv::Mat& preprocessed_img, std::vector<cv::Mat>& outputs) {
-    cv::Mat engine_input = inference_engine_->convertInput(preprocessed_img);
+    cv::Mat engine_input = inference_engine_->convertInput(preprocessed_img, this->use_xyzg_);
     return inference_engine_->infer(engine_input, outputs);
 }
 
@@ -197,7 +197,7 @@ YOLOResult<DetectObj> YOLOPipeline::detectInfer(const cv::Mat& image, bool use_N
     YOLOStatusCode status_code = YOLOStatusCode::SUCCESS;
     std::string status_msg;
     cv::Vec2d roi_offset;
-    cv::Mat processed_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
+    cv::Mat roi_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
 
     if (status_code != YOLOStatusCode::SUCCESS) {
         this->status_code_ = status_code;
@@ -207,7 +207,7 @@ YOLOResult<DetectObj> YOLOPipeline::detectInfer(const cv::Mat& image, bool use_N
     }
 
     // pre-processor
-    auto preprocess_result = yolo_preprocessor_.preprocess(processed_image);
+    auto preprocess_result = yolo_preprocessor_.preprocess(roi_image);
 
     if (!preprocess_result.isSuccess()) {
         this->status_code_ = preprocess_result.status_code;
@@ -256,7 +256,7 @@ YOLOResult<PoseObj> YOLOPipeline::poseInfer(const cv::Mat& image, bool use_NMS) 
     YOLOStatusCode status_code = YOLOStatusCode::SUCCESS;
     std::string status_msg;
     cv::Vec2d roi_offset;
-    cv::Mat processed_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
+    cv::Mat roi_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
 
     if (status_code != YOLOStatusCode::SUCCESS) {
         this->status_code_ = status_code;
@@ -265,7 +265,7 @@ YOLOResult<PoseObj> YOLOPipeline::poseInfer(const cv::Mat& image, bool use_NMS) 
     }
 
     // pre-processor
-    auto preprocess_result = yolo_preprocessor_.preprocess(processed_image);
+    auto preprocess_result = yolo_preprocessor_.preprocess(roi_image);
 
     if (!preprocess_result.isSuccess()) {
         this->status_code_ = preprocess_result.status_code;
@@ -311,7 +311,7 @@ YOLOResult<SegmentObj> YOLOPipeline::segInfer(const cv::Mat& image, bool use_NMS
     YOLOStatusCode status_code = YOLOStatusCode::SUCCESS;
     std::string status_msg;
     cv::Vec2d roi_offset;
-    cv::Mat processed_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
+    cv::Mat roi_image = cropImageWithRoI(image, roi_offset, status_code, status_msg);
 
     if (status_code != YOLOStatusCode::SUCCESS) {
         this->status_code_ = status_code;
@@ -320,7 +320,7 @@ YOLOResult<SegmentObj> YOLOPipeline::segInfer(const cv::Mat& image, bool use_NMS
     }
 
     // pre-processor
-    auto preprocess_result = yolo_preprocessor_.preprocess(processed_image);
+    auto preprocess_result = yolo_preprocessor_.preprocess(roi_image);
 
     if (!preprocess_result.isSuccess()) {
         this->status_code_ = preprocess_result.status_code;
