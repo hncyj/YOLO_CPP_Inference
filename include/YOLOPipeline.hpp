@@ -2,6 +2,7 @@
 
 #include "YOLOProcessor.hpp"
 #include "ModelLoader.hpp"
+#include "YOLOutils.hpp"
 
 #include <memory>
 #include <optional>
@@ -28,8 +29,8 @@ private:
     int mask_channels_ = 32;
     float ratio_ = 0.2f;
     cv::Size mask_size_ = cv::Size(320, 320);
-    
-    
+
+
     // model task type
     YOLOTaskType task_type_;
     InferenceEngine engine_type_;
@@ -42,13 +43,19 @@ private:
 
     // infer engine type
     std::unique_ptr<ModelInferBase> inference_engine_;
-    
+
     // pre post processor
     YOLOPreProcessor yolo_preprocessor_;
     std::unique_ptr<DetectPostProcessor> postprocessor_;
-    
+
     // YOLO postprocessor params
     PostProcessConfig config_;
+
+    // status code
+    YOLOStatusCode status_code_;
+    std::string status_msg_;
+
+    bool is_init_;
 
 public:
     /**
@@ -67,48 +74,50 @@ public:
 
     ~YOLOPipeline() = default;
 
-    // Inference methods
-    std::vector<DetectObj> detectInfer(const cv::Mat& image, bool use_NMS = false);
-    std::vector<PoseObj> poseInfer(const cv::Mat& image, bool use_NMS = false);
-    std::vector<SegmentObj> segInfer(const cv::Mat& image, bool use_NMS = true);
+    YOLOStatusCode getStatusCode() const { return this->status_code_; }
+    std::string getStatusMsg() const { return this->status_msg_; }
 
-    // Set ROI
-    void setRoI(const cv::Rect& roi) { this->roi_ = roi; };
-    
-    // Get model loading status
+    // 推理方法
+    YOLOResult<DetectObj> detectInfer(const cv::Mat& image, bool use_NMS = false);
+    YOLOResult<PoseObj> poseInfer(const cv::Mat& image, bool use_NMS = false);
+    YOLOResult<SegmentObj> segInfer(const cv::Mat& image, bool use_NMS = true);
+
+    void setRoI(const cv::Rect& roi) { this->roi_ = roi; }
+    cv::Size getModelInputSize() const { return this->target_size_; }
+
     bool isLoaded() const { return inference_engine_ && inference_engine_->isLoaded(); }
-
-    // Get model input size
-    cv::Size getModelInputSize() { return this->target_size_; }
+    bool isInit() const { return this->is_init_; }
 
 private:
     /**
-     * @brief Initialize inference engine and post-processor
+     * @brief 初始化推理引擎和后处理器
      */
-    void initializeEngine();
-    
+    bool initializeEngine();
+
     /**
-     * @brief Load model
+     * @brief 加载模型
      */
     bool loadModel();
-    
+
     /**
-     * @brief Run inference
+     * @brief 调用推理
      */
     bool runInference(const cv::Mat& preprocessed_img, std::vector<cv::Mat>& outputs);
 
     /**
-     * @brief Crop image with RoI
-     * @param image Input image
-     * @param roi_offset Output RoI offset (offset_x, offset_y) for coordinate transformation in post-processing
-     * @return Cropped image
+     * @brief 根据RoI设置裁剪图像
+     * @param image 输入图像
+     * @param roi_offset 输出RoI偏移量 (offset_x, offset_y) 用于后处理坐标变换
+     * @param status_code 状态码
+     * @param status_msg 状态信息
+     * @return 裁剪后的图像
      */
-    cv::Mat cropImageWithRoI(const cv::Mat& image, cv::Vec2d& roi_offset);
+    cv::Mat cropImageWithRoI(const cv::Mat& image, cv::Vec2d& roi_offset, YOLOStatusCode& status_code, std::string& status_msg);
 
     /**
-     * @brief Transform detection results from RoI coordinates to original image coordinates
-     * @param results Detection results
-     * @param roi_offset RoI offset (offset_x, offset_y) for coordinate transformation
+     * @brief 将RoI坐标系下的结果转换回原图坐标系
+     * @param results 检测结果
+     * @param roi_offset 输出RoI偏移量 (offset_x, offset_y) 用于后处理坐标变换
      */
     template<typename T>
     void transformResultsToOriginal(std::vector<T>& results, const cv::Vec2d& roi_offset);

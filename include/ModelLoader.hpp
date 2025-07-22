@@ -10,7 +10,7 @@
 #include <openvino/openvino.hpp>
 
 /**
- * @brief Inference engine type enumeration
+ * @brief 推理框架类型枚举
  */
 enum class InferenceEngine {
     OPENVINO,
@@ -24,6 +24,7 @@ class ModelInferBase {
 public:
     virtual ~ModelInferBase() = default;
 
+    // TODO
     /**
      * @brief 
      * @param preprocessed_img img after preprocessed
@@ -44,13 +45,13 @@ public:
      * @return Input shape as vector [batch, channels, height, width]
      */
     virtual std::vector<int64_t> getInputShape() const = 0;
-
+    
     /**
      * @brief Get output shapes of the model
      * @return Vector of output shapes, each shape as vector of dimensions
      */
     virtual std::vector<std::vector<int64_t>> getOutputShapes() const = 0;
-    
+
     /**
      * @brief Check if model is loaded successfully
      * @return true if loaded, false otherwise
@@ -60,14 +61,14 @@ public:
 
 
 /**
- * @brief Inference engine factory class
+ * @brief 推理框架工厂类
  */
 class InferenceEngineFactory {
 public:
     /**
-     * @brief Get inference engine type from model path
-     * @param model_path Path to the model file
-     * @return Inference engine type
+     * @brief 推理框架工厂类
+     * @param model_path 模型文件路径
+     * @return 推理框架类型
      */
     static InferenceEngine getEngineFromModelPath(const std::string& model_path) {
         size_t dot_pos = model_path.find_last_of('.');
@@ -85,30 +86,46 @@ public:
     }
     
     /**
-     * @brief Create inference engine instance
-     * @param engine_type Engine type
-     * @return Unique pointer to inference engine
+     * @brief 创建推理 engine
+     * @param engine_type engine 类型
+     * @return 推理 engine std::unique_ptr
      */
-    static std::unique_ptr<ModelInferBase> createInferenceEngine(InferenceEngine engine_type);
+    static std::unique_ptr<ModelInferBase> createInferenceEngine(
+        InferenceEngine engine_type,
+        YOLOStatusCode& status_code,
+        std::string& status_msg
+    );
 };
 
 /**
- * @brief ONNX Runtime inference implementation
+ * @brief ONNX Runtime
  */
 class ONNXRuntimeInference : public ModelInferBase {
 private:
     std::unique_ptr<Ort::Env> env_;
     std::unique_ptr<Ort::Session> session_;
+
     std::vector<const char*> input_names_;
     std::vector<const char*> output_names_;
+    std::vector<std::string> input_names_str_;
+    std::vector<std::string> output_names_str_;
+
     std::vector<int64_t> input_shape_;
     std::vector<std::vector<int64_t>> output_shape_;
     bool is_loaded_;
+
+    YOLOStatusCode status_code_;
+    std::string status_msg_;
 
 public:
     ONNXRuntimeInference();
     ~ONNXRuntimeInference() override;
     
+    
+    YOLOStatusCode initialize();
+    YOLOStatusCode getStatusCode() const { return status_code_; }
+    std::string getStatusMsg() const { return status_msg_; }
+
     bool loadModel(const std::string& model_path);
     cv::Mat convertInput(const cv::Mat& preprocessed_img);
     bool infer(const cv::Mat& input_blob, std::vector<cv::Mat>& outputs) override;
@@ -118,7 +135,7 @@ public:
 };
 
 /**
- * @brief OpenVINO inference implementation
+ * @brief OpenVINO
  */
 class OpenVINOInference : public ModelInferBase {
 private:
@@ -128,10 +145,17 @@ private:
     std::vector<std::vector<int64_t>> output_shape_;
     bool is_loaded_;
 
+    YOLOStatusCode status_code_;
+    std::string status_msg_;
+
 public:
     OpenVINOInference();
     ~OpenVINOInference() override;
-    
+
+    YOLOStatusCode initialize();
+    YOLOStatusCode getStatusCode() const { return status_code_; }
+    std::string getStatusMsg() const { return status_msg_; }
+
     bool loadModel(const std::string& model_path, const std::string& device = "CPU", const std::string& cache_dir = "model_compile_cache");
     bool infer(const cv::Mat& input_blob, std::vector<cv::Mat>& outputs) override;
     cv::Mat convertInput(const cv::Mat& preprocessed_img) override;
