@@ -49,8 +49,9 @@ bool ONNXRuntimeInference::loadModel(const std::string& model_path) {
         session_options.SetIntraOpNumThreads(0);
 
         // Create session
-        std::wstring model_path_w(model_path.begin(), model_path.end()); // 使用 L 前缀定义宽字符字符串
-        session_ = std::make_unique<Ort::Session>(*env_, model_path_w.c_str(), session_options);
+        // std::wstring model_path_w(model_path.begin(), model_path.end()); // 使用 L 前缀定义宽字符字符串
+        const char* path = model_path.c_str();
+        session_ = std::make_unique<Ort::Session>(*env_, path, session_options);
       
 
         // Get input information
